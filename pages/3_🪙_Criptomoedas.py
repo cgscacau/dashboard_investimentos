@@ -10,7 +10,7 @@ st.set_page_config(page_title="Criptomoedas", layout="wide")
 CRYPTO_LIST = {"Bitcoin": "BTC-USD", "Ethereum": "ETH-USD", "Tether": "USDT-USD", "BNB": "BNB-USD", "Solana": "SOL-USD", "XRP": "XRP-USD", "Cardano": "ADA-USD", "Dogecoin": "DOGE-USD", "Shiba Inu": "SHIB-USD", "Avalanche": "AVAX-USD", "Polkadot": "DOT-USD", "Chainlink": "LINK-USD"}
 
 def get_crypto_data_raw(ticker):
-    stock = yf.Ticker(ticker); time.sleep(0.2)
+    stock = yf.Ticker(ticker); time.sleep(1)
     try:
         info = stock.info
         hist = stock.history(period="5y")
