@@ -8,7 +8,7 @@ from ativos_config import BRAZIL_DIVIDEND_STOCKS, US_DIVIDEND_STOCKS
 
 st.set_page_config(page_title="Explorador de Dividendos", layout="wide")
 
-# ✅ CORREÇÃO: Função otimizada para evitar o erro 429
+# ✅ CORREÇÃO: Função que usa a mesma lógica otimizada
 @st.cache_data(ttl=1800)
 def get_stock_details(tickers, suffix=""):
     data_list = []
@@ -21,7 +21,7 @@ def get_stock_details(tickers, suffix=""):
                 'Dividend Yield (%)': (info.get('trailingAnnualDividendYield', 0) * 100),
                 'P/L': info.get('trailingPE')
             })
-            time.sleep(0.2) # Pausa de segurança um pouco maior
+            time.sleep(0.1) # Pausa de segurança
         except Exception:
             continue
     return pd.DataFrame(data_list)
