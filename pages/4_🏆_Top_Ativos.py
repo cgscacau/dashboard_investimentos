@@ -33,6 +33,7 @@ def get_multiple_stock_info(tickers, suffix=""):
         ticker_yf_name = ticker_name + suffix
         try:
             info = yf.Ticker(ticker_yf_name).info
+            # Pega o preço e fechamento anterior dos dados já baixados
             last_close = price_data[ticker_yf_name]['Close'].iloc[-1]
             previous_close = price_data[ticker_yf_name]['Close'].iloc[-2]
             
@@ -42,7 +43,7 @@ def get_multiple_stock_info(tickers, suffix=""):
                 'Variação (24h)': ((last_close / previous_close) - 1) * 100 if previous_close > 0 else 0,
                 'Market Cap': info.get('marketCap', 0), 'P/L': info.get('trailingPE')
             })
-            time.sleep(0.1) # Pausa de segurança
+            time.sleep(0.05) # Pausa de segurança ainda menor, pois são menos chamadas
         except Exception: continue
     return pd.DataFrame(data_list)
 
@@ -65,6 +66,7 @@ with tab1:
     with st.spinner("Buscando dados das Top 100 Criptomoedas..."): crypto_data = get_top_100_coins()
     if crypto_data:
         df_crypto = pd.DataFrame(crypto_data); df_crypto_display = df_crypto[['market_cap_rank', 'name', 'symbol', 'current_price', 'price_change_percentage_24h', 'market_cap', 'total_volume']].copy(); df_crypto_display.columns = ['Rank', 'Nome', 'Ticker', 'Preço (USD)', 'Variação (24h)', 'Market Cap', 'Volume (24h)']; df_crypto_display['Ticker'] = df_crypto_display['Ticker'].str.upper()
+        # ✅ CORREÇÃO: Usando .map em vez do obsoleto .applymap
         styled_df_crypto = df_crypto_display.style.format({'Preço (USD)': "${:,.4f}", 'Variação (24h)': "{:.2f}%", 'Market Cap': lambda x: f"$ {format_number(x)}", 'Volume (24h)': lambda x: f"$ {format_number(x)}"}).map(style_change, subset=['Variação (24h)'])
         st.dataframe(styled_df_crypto, use_container_width=True, hide_index=True, height=600)
     else: st.error("Não foi possível carregar os dados das criptomoedas no momento.")
