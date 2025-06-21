@@ -7,3 +7,4 @@ googletrans==4.0.0-rc1
 lxml==4.9.3
 beautifulsoup4
 html5lib
+rich==14.0.0
