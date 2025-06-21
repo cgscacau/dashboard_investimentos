@@ -21,7 +21,7 @@ def get_stock_details(tickers, suffix=""):
                 'Dividend Yield (%)': (info.get('trailingAnnualDividendYield', 0) * 100),
                 'P/L': info.get('trailingPE')
             })
-            time.sleep(0.1) # Pausa de segurança
+            time.sleep(0.1) # Pausa de segurança um pouco maior aqui
         except Exception:
             continue
     return pd.DataFrame(data_list)
