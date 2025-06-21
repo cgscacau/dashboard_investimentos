@@ -12,7 +12,7 @@ SECTOR_TRANSLATIONS = {"Financial Services": "Serviços Financeiros", "Consumer 
 
 def get_stock_data_raw(ticker): # Função "crua", sem cache
     ticker_yf = f"{ticker}.SA"
-    stock = yf.Ticker(ticker_yf); time.sleep(0.2)
+    stock = yf.Ticker(ticker_yf); time.sleep(1)
     try:
         info = stock.info
         hist = stock.history(period="5y")
