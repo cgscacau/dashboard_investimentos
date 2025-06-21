@@ -43,7 +43,7 @@ def get_multiple_stock_info(tickers, suffix=""):
                 'Variação (24h)': ((last_close / previous_close) - 1) * 100 if previous_close > 0 else 0,
                 'Market Cap': info.get('marketCap', 0), 'P/L': info.get('trailingPE')
             })
-            time.sleep(0.05) # Pausa de segurança ainda menor, pois são menos chamadas
+            time.sleep(1) # Pausa de segurança ainda menor, pois são menos chamadas
         except Exception: continue
     return pd.DataFrame(data_list)
 
