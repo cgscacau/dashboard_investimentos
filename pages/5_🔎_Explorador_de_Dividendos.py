@@ -3,12 +3,12 @@
 import streamlit as st
 import pandas as pd
 import yfinance as yf
-import time # Importa a biblioteca de tempo
-
+import time
 from ativos_config import BRAZIL_DIVIDEND_STOCKS, US_DIVIDEND_STOCKS
 
 st.set_page_config(page_title="Explorador de Dividendos", layout="wide")
 
+# ✅ CORREÇÃO: Função otimizada para evitar o erro 429
 @st.cache_data(ttl=1800)
 def get_stock_details(tickers, suffix=""):
     data_list = []
@@ -21,8 +21,7 @@ def get_stock_details(tickers, suffix=""):
                 'Dividend Yield (%)': (info.get('trailingAnnualDividendYield', 0) * 100),
                 'P/L': info.get('trailingPE')
             })
-            # ✅ CORREÇÃO: Pausa de 0.1 segundos para não sobrecarregar a API
-            time.sleep(0.1)
+            time.sleep(0.2) # Pausa de segurança um pouco maior
         except Exception:
             continue
     return pd.DataFrame(data_list)
@@ -36,7 +35,6 @@ def style_yield(val):
 
 st.title("🔎 Explorador de Boas Pagadoras de Dividendos")
 st.markdown("Descubra ativos com histórico de bom pagamento de dividendos em diferentes mercados.")
-
 tab1, tab2 = st.tabs(["🇺🇸 **Ações EUA (Lista Curada)**", "🇧🇷 **Ações Brasil (Lista Curada)**"])
 
 with tab1:
@@ -46,7 +44,7 @@ with tab1:
         df_us = get_stock_details(US_DIVIDEND_STOCKS)
     if df_us is not None and not df_us.empty:
         df_us_display = df_us.sort_values(by='Dividend Yield (%)', ascending=False)
-        styled_df_us = df_us_display.style.format({'Preço': "$ {:,.2f}", 'Dividend Yield (%)': "{:.2f}%", 'P/L': "{:.2f}"}).applymap(style_yield, subset=['Dividend Yield (%)'])
+        styled_df_us = df_us_display.style.format({'Preço': "$ {:,.2f}", 'Dividend Yield (%)': "{:.2f}%", 'P/L': "{:.2f}"}).map(style_yield, subset=['Dividend Yield (%)'])
         st.dataframe(styled_df_us, use_container_width=True, hide_index=True, height=600)
     else: st.error("Não foi possível carregar os dados das ações americanas no momento.")
 
@@ -57,6 +55,6 @@ with tab2:
         df_br = get_stock_details(BRAZIL_DIVIDEND_STOCKS, suffix=".SA")
     if not df_br.empty:
         df_br_display = df_br.sort_values(by='Dividend Yield (%)', ascending=False)
-        styled_df_br = df_br_display.style.format({'Preço': "R$ {:,.2f}", 'Dividend Yield (%)': "{:.2f}%", 'P/L': "{:.2f}"}).applymap(style_yield, subset=['Dividend Yield (%)'])
+        styled_df_br = df_br_display.style.format({'Preço': "R$ {:,.2f}", 'Dividend Yield (%)': "{:.2f}%", 'P/L': "{:.2f}"}).map(style_yield, subset=['Dividend Yield (%)'])
         st.dataframe(styled_df_br, use_container_width=True, hide_index=True, height=600)
     else: st.error("Não foi possível carregar os dados das ações brasileiras no momento.")
