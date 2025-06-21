@@ -11,7 +11,7 @@ st.set_page_config(page_title="Mercado Americano", layout="wide")
 SECTOR_TRANSLATIONS = {"Financial Services": "Serviços Financeiros", "Consumer Cyclical": "Consumo Cíclico","Industrials": "Industrial", "Technology": "Tecnologia", "Healthcare": "Saúde","Energy": "Energia", "Utilities": "Utilidades Públicas", "Basic Materials": "Materiais Básicos","Consumer Defensive": "Consumo Defensivo", "Real Estate": "Imobiliário","Communication Services": "Serviços de Comunicação", "Conglomerates": "Conglomerados"}
 
 def get_stock_data_raw(ticker):
-    stock = yf.Ticker(ticker); time.sleep(0.2)
+    stock = yf.Ticker(ticker); time.sleep(1)
     try:
         info = stock.info
         hist = stock.history(period="5y")
