@@ -1,112 +1,85 @@
-# pages/1_🇧🇷_Mercado_Brasileiro.py
-
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import requests
 from datetime import datetime, timedelta
+import numpy as np
 
 st.set_page_config(page_title="Mercado Brasileiro", layout="wide")
 
-# Tradução de setores
-SECTOR_TRANSLATIONS = {
-    "Financial Services": "Serviços Financeiros", "Consumer Cyclical": "Consumo Cíclico",
-    "Industrials": "Industrial", "Technology": "Tecnologia", "Healthcare": "Saúde",
-    "Energy": "Energia", "Utilities": "Utilidades Públicas", "Basic Materials": "Materiais Básicos",
-    "Consumer Defensive": "Consumo Defensivo", "Real Estate": "Imobiliário",
-    "Communication Services": "Serviços de Comunicação", "Conglomerates": "Conglomerados"
-}
-
-# ====== 🔥 Funções Auxiliares 🔥 ======
+# ============================== Funções ==============================
 
 @st.cache_data(ttl=1800)
 def get_stock_data(ticker):
-    try:
-        url = f"https://brapi.dev/api/quote/{ticker}?range=5y&interval=1d&fundamental=true"
-        response = requests.get(url)
-        if response.status_code != 200:
-            return None, None
-        data = response.json()['results'][0]
-
-        info = {
-            'longName': data.get('longName', ''),
-            'symbol': data.get('symbol', ''),
-            'currentPrice': data.get('regularMarketPrice'),
-            'previousClose': data.get('regularMarketPreviousClose'),
-            'fiftyTwoWeekHigh': data.get('fiftyTwoWeekHigh'),
-            'fiftyTwoWeekLow': data.get('fiftyTwoWeekLow'),
-            'marketCap': data.get('marketCap'),
-            'trailingPE': data.get('priceEarnings'),
-            'priceToBook': data.get('priceToBook'),
-            'trailingAnnualDividendYield': data.get('dividendYield'),
-            'returnOnEquity': data.get('roe'),
-            'debtToEquity': data.get('debtToEquity'),
-            'sector': data.get('sector'),
-            'industry': data.get('sector'),
-            'longBusinessSummary': data.get('description'),
-        }
-
-        candles = data.get('historicalDataPrice', [])
-        hist = pd.DataFrame(candles)
-        hist['date'] = pd.to_datetime(hist['date'])
-        hist.set_index('date', inplace=True)
-        hist.rename(columns={
-            'open': 'Open', 'close': 'Close',
-            'high': 'High', 'low': 'Low',
-            'volume': 'Volume', 'dividends': 'Dividends'
-        }, inplace=True)
-        hist = hist.sort_index()
-
-        return info, hist
-    except Exception as e:
-        st.error(f"Erro ao buscar dados: {e}")
+    url = f"https://brapi.dev/api/quote/{ticker}?range=5y&interval=1d&fundamental=true"
+    r = requests.get(url)
+    if r.status_code != 200:
         return None, None
+    data = r.json()
+    if not data.get('results'):
+        return None, None
+    info = data['results'][0]
 
-def format_number(number, is_currency=True):
-    if number is None:
+    prices = info.get('historicalDataPrice', [])
+    if not prices:
+        return info, None
+
+    df = pd.DataFrame(prices)
+    df['date'] = pd.to_datetime(df['date'])
+    df = df.set_index('date').sort_index()
+    return info, df
+
+
+def format_number(value):
+    if value is None:
         return "N/A"
-    prefix = "R$ " if is_currency else ""
-    if abs(number) >= 1e9:
-        return f"{prefix}{number / 1e9:.2f} B"
-    if abs(number) >= 1e6:
-        return f"{prefix}{number / 1e6:.2f} M"
-    return f"{prefix}{number:.2f}"
+    if value >= 1e9:
+        return f"R$ {value/1e9:.2f} B"
+    if value >= 1e6:
+        return f"R$ {value/1e6:.2f} M"
+    return f"R$ {value:.2f}"
 
-# ====== 🔥 Indicadores Técnicos 🔥 ======
 
 def calculate_rsi(data, period=14):
-    delta = data['Close'].diff()
+    delta = data['close'].diff()
     gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
     loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
     rs = gain / loss
     return 100 - (100 / (1 + rs))
 
-def calculate_stochastic(data, period=14, k_smooth=3, d_smooth=3):
-    low_min = data['Low'].rolling(window=period).min()
-    high_max = data['High'].rolling(window=period).max()
-    k = 100 * (data['Close'] - low_min) / (high_max - low_min)
-    return k.rolling(window=k_smooth).mean(), k.rolling(window=k_smooth).mean().rolling(window=d_smooth).mean()
+
+def calculate_stochastic(data, period=14):
+    low_min = data['low'].rolling(window=period).min()
+    high_max = data['high'].rolling(window=period).max()
+    k = 100 * (data['close'] - low_min) / (high_max - low_min)
+    d = k.rolling(window=3).mean()
+    return k, d
+
 
 def calculate_willr(data, period=14):
-    low_min = data['Low'].rolling(window=period).min()
-    high_max = data['High'].rolling(window=period).max()
-    return -100 * (high_max - data['Close']) / (high_max - low_min)
+    high_max = data['high'].rolling(window=period).max()
+    low_min = data['low'].rolling(window=period).min()
+    return -100 * (high_max - data['close']) / (high_max - low_min)
+
 
 def calculate_obv(data):
-    return (data['Volume'] * (~data['Close'].diff().le(0) * 2 - 1)).cumsum()
+    direction = np.sign(data['close'].diff().fillna(0))
+    return (direction * data['volume']).cumsum()
 
-# ====== 🔥 Interpretações 🔥 ======
 
-def interpret_rsi(rsi_value):
-    if rsi_value > 70:
+def calculate_sma(data, period):
+    return data['close'].rolling(window=period).mean()
+
+
+def interpret_rsi(value):
+    if value > 70:
         return "Sobrecomprado", "🔴"
-    if rsi_value < 30:
+    if value < 30:
         return "Sobrevendido", "🟢"
     return "Neutro", "⚪"
 
+
 def interpret_stochastic(k, d):
-    if k is None or d is None:
-        return "N/A", "⚪"
     if k > 80 and d > 80:
         return "Sobrecomprado", "🔴"
     if k < 20 and d < 20:
@@ -115,21 +88,24 @@ def interpret_stochastic(k, d):
         return "Sinal de Alta", "🟢"
     return "Sinal de Baixa", "🔴"
 
-def interpret_willr(willr_value):
-    if willr_value > -20:
+
+def interpret_willr(value):
+    if value > -20:
         return "Sobrecomprado", "🔴"
-    if willr_value < -80:
+    if value < -80:
         return "Sobrevendido", "🟢"
     return "Neutro", "⚪"
 
-def interpret_obv(obv_series):
-    if len(obv_series) < 5:
+
+def interpret_obv(obv):
+    if len(obv) < 5:
         return "Dados insuficientes", "⚪"
-    if obv_series.iloc[-1] > obv_series.iloc[-5]:
+    if obv.iloc[-1] > obv.iloc[-5]:
         return "Acumulação", "🟢"
-    if obv_series.iloc[-1] < obv_series.iloc[-5]:
+    if obv.iloc[-1] < obv.iloc[-5]:
         return "Distribuição", "🔴"
     return "Neutro", "⚪"
+
 
 def analyze_convergence(signals):
     score = 0
@@ -138,126 +114,124 @@ def analyze_convergence(signals):
             score -= 1
         if "Sobrevendido" in signal or "Alta" in signal or "Acumulação" in signal:
             score += 1
-
     if score >= 2:
-        return "Convergência de Sinais de ALTA.", "Sugere uma possível ZONA DE COMPRA."
+        return "🔼 Convergência de Sinais de ALTA", "🟢 Possível zona de COMPRA"
     if score <= -2:
-        return "Convergência de Sinais de BAIXA.", "Sugere uma possível ZONA DE VENDA."
-    return "Sinais DIVERGENTES ou Neutros.", "Sugere INDEFINIÇÃO ou movimento lateral."
+        return "🔽 Convergência de Sinais de BAIXA", "🔴 Possível zona de VENDA"
+    return "⏸️ Sinais neutros ou divergentes", "⚪ Mercado indefinido"
 
-# ========================================
 
-# 🔥 Interface Streamlit 🔥
-st.title("🇧🇷 Análise de Ativos Brasileiros (Ações, FIIs, ETFs)")
-st.markdown("Pesquise um ativo da B3 (ex: PETR4, ITSA4, BBAS3)")
+def get_valuation(info, price):
+    eps = info.get('earningsPerShare')
+    bvps = info.get('bookValue')
+    if eps and bvps:
+        fair_value = (22.5 * eps * bvps) ** 0.5
+        return fair_value
+    return None
 
-ticker_input = st.text_input("Digite o Ticker do Ativo:", "ITSA4").upper()
 
-if ticker_input:
-    with st.spinner(f"Buscando dados para {ticker_input}..."):
-        stock_info, hist_data = get_stock_data(ticker_input)
+# ============================ Interface ==============================
 
-    if stock_info and not hist_data.empty:
-        current_price = stock_info.get('currentPrice') or hist_data['Close'].iloc[-1]
-        sector_pt = SECTOR_TRANSLATIONS.get(
-            stock_info.get('industry', stock_info.get('sector', 'N/A')),
-            stock_info.get('industry', stock_info.get('sector', 'N/A'))
-        )
+st.title("🇧🇷 Mercado Brasileiro — Análise Completa")
 
-        hist_2y = hist_data.loc[hist_data.index > (datetime.now() - timedelta(days=730))].copy()
+ticker = st.text_input("Digite o ticker (Ex.: ITSA4, PETR4, BBAS3, EGIE3):", "ITSA4").upper()
 
-        previous_close = stock_info.get('previousClose')
-        change_pct_manual = None
-        if previous_close and current_price and previous_close > 0:
-            change_pct_manual = ((current_price / previous_close) - 1)
+if ticker:
+    with st.spinner(f"Buscando dados de {ticker}..."):
+        info, df = get_stock_data(ticker)
 
-        delta_text = f"{change_pct_manual * 100:.2f}%" if change_pct_manual is not None else ""
+    if info:
+        # ========= Dados Básicos =========
+        current_price = info.get("regularMarketPrice")
+        long_name = info.get("longName", ticker)
+        sector = info.get("sector", "N/A")
+        dy = info.get("dividendYield") or 0
+        market_cap = info.get("marketCap")
+        week52high = info.get("fiftyTwoWeekHigh")
+        week52low = info.get("fiftyTwoWeekLow")
 
-        st.header(f"{stock_info.get('longName', 'N/A')} ({stock_info.get('symbol', 'N/A')})", divider='rainbow')
-        cols_header = st.columns(4)
-        cols_header[0].metric("Preço Atual", f"R$ {current_price:.2f}", delta=delta_text)
-        cols_header[1].metric("Setor", sector_pt)
-        cols_header[2].metric("Mín. 52 Semanas", f"R$ {stock_info.get('fiftyTwoWeekLow', 0):.2f}")
-        cols_header[3].metric("Máx. 52 Semanas", f"R$ {stock_info.get('fiftyTwoWeekHigh', 0):.2f}")
+        st.header(f"{long_name} ({ticker})", divider="rainbow")
 
-        # ==== 🔥 ABA DE ANÁLISE TÉCNICA 🔥 ====
-        st.subheader("📊 Análise Técnica Avançada")
+        col1, col2, col3, col4 = st.columns(4)
+        col1.metric("Preço Atual", f"R$ {current_price:.2f}" if current_price else "N/A")
+        col2.metric("Setor", sector)
+        col3.metric("Dividend Yield", f"{dy:.2f}%" if dy else "N/A")
+        col4.metric("Valor de Mercado", format_number(market_cap))
 
-        hist_2y['RSI'] = calculate_rsi(hist_2y)
-        hist_2y['STOCHk'], hist_2y['STOCHd'] = calculate_stochastic(hist_2y)
-        hist_2y['WILLR'] = calculate_willr(hist_2y)
-        hist_2y['OBV'] = calculate_obv(hist_2y)
-        hist_2y['SMA20'] = hist_2y['Close'].rolling(window=20).mean()
-        hist_2y['SMA50'] = hist_2y['Close'].rolling(window=50).mean()
+        col5, col6 = st.columns(2)
+        col5.metric("Mín. 52 Semanas", f"R$ {week52low:.2f}" if week52low else "N/A")
+        col6.metric("Máx. 52 Semanas", f"R$ {week52high:.2f}" if week52high else "N/A")
 
-        fig_price = go.Figure(data=[
-            go.Candlestick(
-                x=hist_2y.index,
-                open=hist_2y['Open'],
-                high=hist_2y['High'],
-                low=hist_2y['Low'],
-                close=hist_2y['Close'],
-                name='Candlestick'
-            ),
-            go.Scatter(x=hist_2y.index, y=hist_2y['SMA20'], mode='lines', name='MMS 20'),
-            go.Scatter(x=hist_2y.index, y=hist_2y['SMA50'], mode='lines', name='MMS 50')
-        ])
+        tab1, tab2, tab3 = st.tabs(["📈 Gráfico de Preço", "📊 Análise Técnica", "📜 Dados Fundamentais"])
 
-        fig_price.update_layout(
-            title=f'Gráfico de Preços para {ticker_input} (Últimos 2 Anos)',
-            yaxis_title='Preço (R$)',
-            xaxis_rangeslider_visible=False,
-            height=400
-        )
-        st.plotly_chart(fig_price, use_container_width=True)
+        # ========= Gráfico =========
+        with tab1:
+            if df is not None:
+                df['SMA20'] = calculate_sma(df, 20)
+                df['SMA50'] = calculate_sma(df, 50)
 
-        col_ind1, col_ind2 = st.columns(2)
+                fig = go.Figure()
+                fig.add_trace(go.Candlestick(
+                    x=df.index,
+                    open=df['open'],
+                    high=df['high'],
+                    low=df['low'],
+                    close=df['close'],
+                    name='Candlestick'
+                ))
+                fig.add_trace(go.Scatter(
+                    x=df.index, y=df['SMA20'], name="Média 20", line=dict(color='blue')
+                ))
+                fig.add_trace(go.Scatter(
+                    x=df.index, y=df['SMA50'], name="Média 50", line=dict(color='orange')
+                ))
 
-        with col_ind1:
-            fig_rsi = go.Figure()
-            fig_rsi.add_trace(go.Scatter(x=hist_2y.index, y=hist_2y['RSI'], name='RSI'))
-            fig_rsi.add_hline(y=70, line_dash="dash", line_color="red")
-            fig_rsi.add_hline(y=30, line_dash="dash", line_color="green")
-            fig_rsi.update_layout(title="Índice de Força Relativa (RSI)", height=250)
-            st.plotly_chart(fig_rsi, use_container_width=True)
+                fig.update_layout(title=f'{ticker} — Últimos 5 anos',
+                                  xaxis_rangeslider_visible=False,
+                                  height=500)
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.warning("Histórico não disponível para este ativo.")
 
-            fig_stoch = go.Figure()
-            fig_stoch.add_trace(go.Scatter(x=hist_2y.index, y=hist_2y['STOCHk'], name='%K'))
-            fig_stoch.add_trace(go.Scatter(x=hist_2y.index, y=hist_2y['STOCHd'], name='%D'))
-            fig_stoch.add_hline(y=80, line_dash="dash", line_color="red")
-            fig_stoch.add_hline(y=20, line_dash="dash", line_color="green")
-            fig_stoch.update_layout(title="Oscilador Estocástico", height=250)
-            st.plotly_chart(fig_stoch, use_container_width=True)
+        # ========= Análise Técnica =========
+        with tab2:
+            if df is not None:
+                df['RSI'] = calculate_rsi(df)
+                df['STOCHk'], df['STOCHd'] = calculate_stochastic(df)
+                df['WILLR'] = calculate_willr(df)
+                df['OBV'] = calculate_obv(df)
 
-        with col_ind2:
-            fig_willr = go.Figure()
-            fig_willr.add_trace(go.Scatter(x=hist_2y.index, y=hist_2y['WILLR'], name='Williams %R'))
-            fig_willr.add_hline(y=-20, line_dash="dash", line_color="red")
-            fig_willr.add_hline(y=-80, line_dash="dash", line_color="green")
-            fig_willr.update_layout(title="Williams %R", height=250)
-            st.plotly_chart(fig_willr, use_container_width=True)
+                signals = {
+                    "RSI": interpret_rsi(df['RSI'].iloc[-1]),
+                    "Estocástico": interpret_stochastic(df['STOCHk'].iloc[-1], df['STOCHd'].iloc[-1]),
+                    "Williams %R": interpret_willr(df['WILLR'].iloc[-1]),
+                    "OBV": interpret_obv(df['OBV']),
+                }
 
-            fig_obv = go.Figure()
-            fig_obv.add_trace(go.Scatter(x=hist_2y.index, y=hist_2y['OBV'], name='OBV'))
-            fig_obv.update_layout(title="On-Balance Volume (OBV)", height=250)
-            st.plotly_chart(fig_obv, use_container_width=True)
+                cols = st.columns(4)
+                for i, (ind, (text, emoji)) in enumerate(signals.items()):
+                    cols[i].metric(ind, text, emoji)
 
-        st.markdown("---")
-        st.subheader("Interpretação e Convergência dos Indicadores")
+                conclusion, recommendation = analyze_convergence(signals)
+                st.subheader(conclusion)
+                st.markdown(f"### {recommendation}")
 
-        signals = {
-            "RSI": interpret_rsi(hist_2y['RSI'].iloc[-1]),
-            "Estocástico": interpret_stochastic(hist_2y['STOCHk'].iloc[-1], hist_2y['STOCHd'].iloc[-1]),
-            "Williams %R": interpret_willr(hist_2y['WILLR'].iloc[-1]),
-            "OBV": interpret_obv(hist_2y['OBV'])
-        }
+            else:
+                st.warning("Dados insuficientes para análise técnica.")
 
-        cols_interp = st.columns(4)
-        _ = [cols_interp[i].metric(label=f"{indicator} {emoji}", value=text) for i, (indicator, (text, emoji)) in enumerate(signals.items())]
+        # ========= Dados Fundamentais =========
+        with tab3:
+            st.subheader("📜 Dados Fundamentais")
+            st.json(info)
 
-        conclusion, recommendation = analyze_convergence(signals)
-        st.markdown(f"### Conclusão da Análise Técnica: {conclusion}")
-        st.markdown(f"<p style='font-size: 20px;'>{recommendation}</p>", unsafe_allow_html=True)
+            fair_value = get_valuation(info, current_price)
+            if fair_value:
+                upside = (fair_value / current_price - 1) * 100
+                st.subheader("📊 Valuation - Benjamin Graham")
+                st.write(f"Valor Justo: **R$ {fair_value:.2f}**")
+                st.write(f"Potencial: **{'🔼' if upside > 0 else '🔽'} {upside:.2f}%**")
+            else:
+                st.info("Não foi possível calcular valuation com os dados disponíveis.")
 
     else:
-        st.error(f"Não foi possível encontrar dados para '{ticker_input}'. Verifique o ticker e tente novamente.")
+        st.error(f"Não foi possível obter dados para o ticker {ticker}. Verifique se está correto.")
