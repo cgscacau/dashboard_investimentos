@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 import yfinance as yf
 from datetime import datetime, timedelta
 from googletrans import Translator
+import time # Importa a biblioteca de tempo
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="Mercado Americano", layout="wide")
@@ -31,28 +32,28 @@ def get_stock_data(ticker):
     stock = yf.Ticker(ticker)
     try:
         info = stock.info
+        # ✅ CORREÇÃO: Pausa adicionada para respeitar o limite da API
+        time.sleep(0.2)
         hist = stock.history(period="5y")
         if hist.empty or not info.get('longName'): return None, None
         try: hist.index = hist.index.tz_localize(None)
         except TypeError: pass
         return info, hist
-    except Exception: return None, None
-
+    except Exception:
+        return None, None
+# ... (o restante do arquivo permanece idêntico) ...
 def format_number(number, is_currency=True):
     if number is None: return "N/A"
-    prefix = "$ " if is_currency else "" # Dólar
+    prefix = "$ " if is_currency else ""
     if abs(number) >= 1e9: return f"{prefix}{number / 1e9:.2f} B"
     if abs(number) >= 1e6: return f"{prefix}{number / 1e6:.2f} M"
     return f"{prefix}{number}"
-
-# ✅ CORREÇÃO: Funções de cálculo de indicadores usando apenas pandas
 def calculate_rsi(data, period=14):
     delta = data['Close'].diff()
     gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
     loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
     rs = gain / loss
     return 100 - (100 / (1 + rs))
-
 def calculate_stochastic(data, period=14, k_smooth=3, d_smooth=3):
     low_min = data['Low'].rolling(window=period).min()
     high_max = data['High'].rolling(window=period).max()
@@ -60,17 +61,13 @@ def calculate_stochastic(data, period=14, k_smooth=3, d_smooth=3):
     k_smoothed = k.rolling(window=k_smooth).mean()
     d_smoothed = k_smoothed.rolling(window=d_smooth).mean()
     return k_smoothed, d_smoothed
-
 def calculate_willr(data, period=14):
     low_min = data['Low'].rolling(window=period).min()
     high_max = data['High'].rolling(window=period).max()
     return -100 * (high_max - data['Close']) / (high_max - low_min)
-
 def calculate_obv(data):
     obv = (data['Volume'] * (~data['Close'].diff().le(0) * 2 - 1)).cumsum()
     return obv
-
-# --- O RESTANTE DAS FUNÇÕES (interpretação, valuation, etc.) permanece igual ---
 def interpret_rsi(rsi_value):
     if rsi_value > 70: return "Sobrecomprado", "🔴"
     if rsi_value < 30: return "Sobrevendido", "🟢"
@@ -116,22 +113,17 @@ def create_valuation_gauge(avg_fair_price, current_price):
                'threshold': {'line': {'color': "black", 'width': 4}, 'thickness': 0.75, 'value': avg_fair_price}}))
     fig.update_layout(height=300, margin=dict(t=50, b=50))
     return fig
-
-# --- INTERFACE PRINCIPAL ---
-st.title("🇺🇸 Análise de Ativos Americanos (Ações, ETFs, REITs)")
-st.markdown("Use o campo abaixo para pesquisar um ativo dos EUA (ex: AAPL, MSFT, O, SPY)")
+st.title("🇺🇸 Análise de Ativos Americanos (Ações, ETFs, REITs)"); st.markdown("Use o campo abaixo para pesquisar um ativo dos EUA (ex: AAPL, MSFT, O, SPY)")
 ticker_input = st.text_input("Digite o Ticker do Ativo:", "AAPL").upper()
 if ticker_input:
-    with st.spinner(f"Buscando e analisando dados para {ticker_input}..."):
-        stock_info, hist_data = get_stock_data(ticker_input)
+    with st.spinner(f"Buscando e analisando dados para {ticker_input}..."): stock_info, hist_data = get_stock_data(ticker_input)
     if stock_info and not hist_data.empty:
         current_price = stock_info.get('currentPrice') or hist_data['Close'].iloc[-1]
         category_en = stock_info.get('industry', stock_info.get('sector', 'N/A'))
         sector_pt = SECTOR_TRANSLATIONS.get(category_en, category_en)
         hist_2y = hist_data.loc[hist_data.index > (datetime.now() - timedelta(days=730))].copy()
         summary_translated = translate_text_safely(stock_info.get('longBusinessSummary'))
-        change_pct_manual = None
-        previous_close = stock_info.get('previousClose')
+        change_pct_manual = None; previous_close = stock_info.get('previousClose')
         if previous_close and current_price and previous_close > 0: change_pct_manual = ((current_price / previous_close) - 1)
         delta_text = f"{change_pct_manual * 100:.2f}%" if change_pct_manual is not None else ""
         dy_value = f"{(stock_info.get('trailingAnnualDividendYield', 0) * 100):.2f}%" if stock_info.get('trailingAnnualDividendYield') else "N/A"
