@@ -2,6 +2,8 @@ streamlit
 requests
 pandas
 plotly
-pandas-ta
 yfinance
+googletrans==4.0.0-rc1
+beautifulsoup4
 lxml
+pandas-ta
