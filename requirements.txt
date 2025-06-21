@@ -4,5 +4,6 @@ plotly==5.20.0
 requests==2.31.0
 yfinance==0.2.38
 googletrans==4.0.0-rc1
-beautifulsoup4==4.12.3
 lxml==5.2.1
+beautifulsoup4
+html5lib
