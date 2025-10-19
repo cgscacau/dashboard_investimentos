@@ -25,6 +25,12 @@ st.markdown("""
         padding: 10px;
         border-radius: 5px;
     }
+    h1 {
+        color: #1f77b4;
+    }
+    h2 {
+        color: #2ca02c;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -46,40 +52,74 @@ def main():
     st.sidebar.markdown("---")
     
     # Informações adicionais
-    with st.sidebar.expander("ℹ️ Sobre"):
+    with st.sidebar.expander("ℹ️ Sobre o Dashboard"):
         st.markdown("""
         **Dashboard de Investimentos**
         
-        Ferramenta para análise técnica de:
-        - Ações brasileiras e internacionais
-        - Fundos de investimento
-        - Comparação entre múltiplos ativos
+        Ferramenta completa para análise técnica de:
+        - ✅ Ações brasileiras e internacionais
+        - ✅ Fundos de investimento e ETFs
+        - ✅ Comparação entre múltiplos ativos
         
-        **Desenvolvido com:**
+        **Recursos:**
+        - Gráficos interativos
+        - Indicadores técnicos (RSI, MACD, Bollinger)
+        - Análise de correlação
+        - Cálculo de volatilidade e Sharpe Ratio
+        
+        **Tecnologias:**
         - Streamlit
         - yFinance
         - Plotly
         - pandas-ta
         
-        **Versão:** 2.0
+        **Versão:** 2.0 (Português BR)
         """)
     
     with st.sidebar.expander("📚 Como Usar"):
         st.markdown("""
         **Ações Brasileiras:**
-        - Use o sufixo .SA (ex: PETR4.SA)
+        - Use o sufixo .SA
+        - Exemplos: PETR4.SA, VALE3.SA, ITUB4.SA
         
         **Ações Internacionais:**
-        - Use o ticker direto (ex: AAPL)
+        - Use o código direto
+        - Exemplos: AAPL, MSFT, GOOGL
         
-        **ETFs:**
-        - Brasil: HASH11.SA, BOVA11.SA
-        - EUA: SPY, QQQ, VOO
+        **ETFs Brasileiros:**
+        - BOVA11.SA (Ibovespa)
+        - HASH11.SA (NASDAQ)
+        - SMAL11.SA (Small Caps)
+        
+        **ETFs Internacionais:**
+        - SPY (S&P 500)
+        - QQQ (NASDAQ)
+        - VOO (Vanguard S&P 500)
         
         **Dicas:**
-        - Ajuste o período de análise
-        - Compare múltiplos ativos
-        - Use indicadores técnicos
+        - 📊 Ajuste o período de análise conforme necessário
+        - 📈 Use indicadores técnicos para identificar tendências
+        - ⚖️ Compare múltiplos ativos para diversificação
+        - 💡 Verifique a correlação entre ativos
+        """)
+    
+    with st.sidebar.expander("⚠️ Aviso Legal"):
+        st.markdown("""
+        **IMPORTANTE:**
+        
+        Este dashboard é apenas para fins **educacionais** e **informativos**.
+        
+        ❌ **NÃO** constitui recomendação de investimento
+        
+        ❌ **NÃO** substitui análise profissional
+        
+        ❌ **NÃO** garante resultados futuros
+        
+        ✅ Consulte sempre um profissional certificado antes de investir
+        
+        ✅ Os dados são fornecidos pelo Yahoo Finance
+        
+        ✅ Investimentos envolvem riscos
         """)
     
     # Roteamento de páginas
@@ -96,7 +136,10 @@ def main():
         """
         <div style='text-align: center; color: gray; font-size: 0.8em;'>
         💡 Dados fornecidos por Yahoo Finance<br>
-        ⚠️ Este dashboard é apenas para fins educacionais
+        📊 Dashboard v2.0 - Português BR<br>
+        ⚠️ Apenas para fins educacionais<br>
+        <br>
+        Desenvolvido com ❤️ usando Streamlit
         </div>
         """,
         unsafe_allow_html=True
