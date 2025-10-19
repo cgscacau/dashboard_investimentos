@@ -4,6 +4,7 @@ import streamlit as st
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import pandas as pd
+import numpy as np
 from config import Config
 from utils.data_fetcher import fetch_stock_data, get_stock_info
 from utils.indicators import calculate_all_indicators, get_signal_interpretation
@@ -49,24 +50,39 @@ def show():
         st.info("💡 Verifique se o ticker está correto. Para ações brasileiras, use o sufixo .SA (ex: PETR4.SA)")
         return
     
+    # Normalizar dados se tiver multi-index
+    dados = normalizar_dados(dados)
+    
+    # Verificar se tem dados válidos
+    if 'Close' not in dados.columns or dados['Close'].isna().all():
+        st.error("❌ Dados inválidos recebidos")
+        return
+    
     # Informações da ação
     col1, col2, col3, col4 = st.columns(4)
     
-    with col1:
-        preco_atual = dados['Close'].iloc[-1]
-        st.metric("Preço Atual", f"R$ {preco_atual:.2f}")
+    try:
+        preco_atual = float(dados['Close'].iloc[-1])
+        preco_inicial = float(dados['Close'].iloc[0])
+        maxima = float(dados['High'].max())
+        minima = float(dados['Low'].min())
+        variacao = ((preco_atual - preco_inicial) / preco_inicial) * 100
+        
+        with col1:
+            st.metric("Preço Atual", f"R$ {preco_atual:.2f}")
+        
+        with col2:
+            st.metric("Variação no Período", f"{variacao:.2f}%", delta=f"{variacao:.2f}%")
+        
+        with col3:
+            st.metric("Máxima", f"R$ {maxima:.2f}")
+        
+        with col4:
+            st.metric("Mínima", f"R$ {minima:.2f}")
     
-    with col2:
-        variacao = ((dados['Close'].iloc[-1] - dados['Close'].iloc[0]) / dados['Close'].iloc[0]) * 100
-        st.metric("Variação no Período", f"{variacao:.2f}%", delta=f"{variacao:.2f}%")
-    
-    with col3:
-        maxima = dados['High'].max()
-        st.metric("Máxima", f"R$ {maxima:.2f}")
-    
-    with col4:
-        minima = dados['Low'].min()
-        st.metric("Mínima", f"R$ {minima:.2f}")
+    except (ValueError, TypeError, IndexError) as e:
+        st.error(f"❌ Erro ao processar métricas: {str(e)}")
+        return
     
     # Calcular indicadores
     with st.spinner("Calculando indicadores técnicos..."):
@@ -102,6 +118,44 @@ def show():
     # Informações da empresa
     with st.expander("🏢 Informações da Empresa"):
         mostrar_info_empresa(ticker)
+
+
+def normalizar_dados(dados):
+    """
+    Normaliza o DataFrame removendo multi-index se existir.
+    
+    Args:
+        dados: DataFrame com dados de ações
+        
+    Returns:
+        DataFrame normalizado
+    """
+    if dados.empty:
+        return dados
+    
+    # Se as colunas forem MultiIndex, flatten
+    if isinstance(dados.columns, pd.MultiIndex):
+        dados.columns = dados.columns.get_level_values(0)
+    
+    # Garantir que as colunas esperadas existem
+    colunas_esperadas = ['Open', 'High', 'Low', 'Close', 'Volume']
+    for col in colunas_esperadas:
+        if col not in dados.columns:
+            # Tentar encontrar coluna similar (case insensitive)
+            for dados_col in dados.columns:
+                if col.lower() == str(dados_col).lower():
+                    dados.rename(columns={dados_col: col}, inplace=True)
+                    break
+    
+    # Converter para numérico
+    for col in ['Open', 'High', 'Low', 'Close', 'Volume']:
+        if col in dados.columns:
+            dados[col] = pd.to_numeric(dados[col], errors='coerce')
+    
+    # Remover linhas com NaN em Close
+    dados = dados.dropna(subset=['Close'])
+    
+    return dados
 
 
 def criar_grafico_principal(dados, indicators, ticker, mostrar_bb, mostrar_sma):
@@ -145,21 +199,21 @@ def criar_grafico_principal(dados, indicators, ticker, mostrar_bb, mostrar_sma):
     
     # Médias Móveis
     if mostrar_sma:
-        if 'SMA_20' in indicators:
+        if 'SMA_20' in indicators and not indicators['SMA_20'].isna().all():
             fig.add_trace(go.Scatter(
                 x=dados.index,
                 y=indicators['SMA_20'],
                 name='SMA 20',
                 line=dict(color='orange', width=1)
             ))
-        if 'SMA_50' in indicators:
+        if 'SMA_50' in indicators and not indicators['SMA_50'].isna().all():
             fig.add_trace(go.Scatter(
                 x=dados.index,
                 y=indicators['SMA_50'],
                 name='SMA 50',
                 line=dict(color='red', width=1)
             ))
-        if 'SMA_200' in indicators:
+        if 'SMA_200' in indicators and not indicators['SMA_200'].isna().all():
             fig.add_trace(go.Scatter(
                 x=dados.index,
                 y=indicators['SMA_200'],
@@ -181,6 +235,10 @@ def criar_grafico_principal(dados, indicators, ticker, mostrar_bb, mostrar_sma):
 
 def criar_grafico_rsi(rsi, ticker):
     """Cria o gráfico do RSI."""
+    if rsi.isna().all():
+        st.warning("RSI não disponível para este período")
+        return
+    
     fig = go.Figure()
     
     fig.add_trace(go.Scatter(
@@ -208,6 +266,10 @@ def criar_grafico_rsi(rsi, ticker):
 
 def criar_grafico_macd(indicators, ticker):
     """Cria o gráfico do MACD."""
+    if 'MACD' not in indicators or indicators['MACD'].isna().all():
+        st.warning("MACD não disponível para este período")
+        return
+    
     fig = go.Figure()
     
     if 'MACD' in indicators:
@@ -249,6 +311,10 @@ def criar_grafico_macd(indicators, ticker):
 
 def criar_grafico_volume(dados, ticker):
     """Cria o gráfico de volume."""
+    if 'Volume' not in dados.columns or dados['Volume'].isna().all():
+        st.warning("Volume não disponível para este período")
+        return
+    
     fig = go.Figure()
     
     colors = ['green' if dados['Close'].iloc[i] >= dados['Open'].iloc[i] else 'red' 
@@ -279,21 +345,27 @@ def mostrar_estatisticas(dados, indicators):
     
     with col1:
         st.subheader("Estatísticas de Preço")
-        st.write(f"**Média:** R$ {dados['Close'].mean():.2f}")
-        st.write(f"**Mediana:** R$ {dados['Close'].median():.2f}")
-        st.write(f"**Desvio Padrão:** R$ {dados['Close'].std():.2f}")
-        st.write(f"**Volatilidade:** {(dados['Close'].std() / dados['Close'].mean() * 100):.2f}%")
+        try:
+            st.write(f"**Média:** R$ {float(dados['Close'].mean()):.2f}")
+            st.write(f"**Mediana:** R$ {float(dados['Close'].median()):.2f}")
+            st.write(f"**Desvio Padrão:** R$ {float(dados['Close'].std()):.2f}")
+            st.write(f"**Volatilidade:** {float(dados['Close'].std() / dados['Close'].mean() * 100):.2f}%")
+        except (ValueError, TypeError):
+            st.warning("Erro ao calcular estatísticas")
     
     with col2:
         st.subheader("Indicadores Atuais")
-        if 'RSI' in indicators and not indicators['RSI'].empty:
-            st.write(f"**RSI:** {indicators['RSI'].iloc[-1]:.2f}")
-        if 'SMA_20' in indicators and not indicators['SMA_20'].empty:
-            st.write(f"**SMA 20:** R$ {indicators['SMA_20'].iloc[-1]:.2f}")
-        if 'SMA_50' in indicators and not indicators['SMA_50'].empty:
-            st.write(f"**SMA 50:** R$ {indicators['SMA_50'].iloc[-1]:.2f}")
-        if 'SMA_200' in indicators and not indicators['SMA_200'].empty:
-            st.write(f"**SMA 200:** R$ {indicators['SMA_200'].iloc[-1]:.2f}")
+        try:
+            if 'RSI' in indicators and not indicators['RSI'].isna().all():
+                st.write(f"**RSI:** {float(indicators['RSI'].iloc[-1]):.2f}")
+            if 'SMA_20' in indicators and not indicators['SMA_20'].isna().all():
+                st.write(f"**SMA 20:** R$ {float(indicators['SMA_20'].iloc[-1]):.2f}")
+            if 'SMA_50' in indicators and not indicators['SMA_50'].isna().all():
+                st.write(f"**SMA 50:** R$ {float(indicators['SMA_50'].iloc[-1]):.2f}")
+            if 'SMA_200' in indicators and not indicators['SMA_200'].isna().all():
+                st.write(f"**SMA 200:** R$ {float(indicators['SMA_200'].iloc[-1]):.2f}")
+        except (ValueError, TypeError, IndexError):
+            st.warning("Alguns indicadores não estão disponíveis")
 
 
 def mostrar_info_empresa(ticker):
@@ -313,10 +385,19 @@ def mostrar_info_empresa(ticker):
         
         with col2:
             if 'marketCap' in info:
-                st.write(f"**Market Cap:** R$ {info['marketCap']:,.0f}")
+                try:
+                    st.write(f"**Market Cap:** R$ {float(info['marketCap']):,.0f}")
+                except (ValueError, TypeError):
+                    pass
             if 'dividendYield' in info and info['dividendYield']:
-                st.write(f"**Dividend Yield:** {info['dividendYield']*100:.2f}%")
+                try:
+                    st.write(f"**Dividend Yield:** {float(info['dividendYield'])*100:.2f}%")
+                except (ValueError, TypeError):
+                    pass
             if 'beta' in info:
-                st.write(f"**Beta:** {info['beta']:.2f}")
+                try:
+                    st.write(f"**Beta:** {float(info['beta']):.2f}")
+                except (ValueError, TypeError):
+                    pass
     else:
         st.info("Informações da empresa não disponíveis.")
