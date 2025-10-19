@@ -25,10 +25,26 @@ class Config:
     
     TICKERS_BRASILEIROS_POPULARES = [
         'PETR4.SA', 'VALE3.SA', 'ITUB4.SA', 'BBDC4.SA', 
-        'ABEV3.SA', 'B3SA3.SA', 'MGLU3.SA', 'WEGE3.SA'
+        'ABEV3.SA', 'B3SA3.SA', 'MGLU3.SA', 'WEGE3.SA',
+        'RENT3.SA', 'GGBR4.SA'
     ]
     
     TICKERS_INTERNACIONAIS_POPULARES = [
         'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 
         'META', 'NVDA', 'JPM', 'V', 'WMT'
     ]
+    
+    # Setores em português
+    SETORES_PORTUGUES = {
+        'Technology': 'Tecnologia',
+        'Financial Services': 'Serviços Financeiros',
+        'Healthcare': 'Saúde',
+        'Consumer Cyclical': 'Consumo Cíclico',
+        'Consumer Defensive': 'Consumo Defensivo',
+        'Industrials': 'Industrial',
+        'Energy': 'Energia',
+        'Basic Materials': 'Materiais Básicos',
+        'Real Estate': 'Imobiliário',
+        'Communication Services': 'Serviços de Comunicação',
+        'Utilities': 'Utilidades Públicas'
+    }
