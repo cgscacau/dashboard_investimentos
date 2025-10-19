@@ -23,16 +23,31 @@ def fetch_stock_data(ticker: str, period: str = '1y') -> Optional[pd.DataFrame]:
         DataFrame com dados históricos ou None em caso de erro
     """
     try:
-        data = yf.download(ticker, period=period, progress=False)
+        # Download com auto_adjust=True para evitar multi-index
+        data = yf.download(
+            ticker, 
+            period=period, 
+            progress=False,
+            auto_adjust=True,  # Ajusta automaticamente para evitar multi-index
+            threads=False
+        )
         
         if data.empty:
             logger.warning(f"Nenhum dado encontrado para {ticker}")
             return None
-            
+        
+        # Se ainda tiver multi-index, flatten
+        if isinstance(data.columns, pd.MultiIndex):
+            data.columns = data.columns.get_level_values(0)
+        
         # Garantir que o índice seja datetime
         if not isinstance(data.index, pd.DatetimeIndex):
             data.index = pd.to_datetime(data.index)
-            
+        
+        # Adicionar coluna Adj Close se não existir
+        if 'Adj Close' not in data.columns and 'Close' in data.columns:
+            data['Adj Close'] = data['Close']
+        
         return data
         
     except Exception as e:
@@ -66,7 +81,7 @@ def fetch_multiple_stocks(tickers: List[str], period: str = '1y') -> Dict[str, p
             ticker = future_to_ticker[future]
             try:
                 data = future.result()
-                if data is not None:
+                if data is not None and not data.empty:
                     results[ticker] = data
             except Exception as e:
                 logger.error(f"Erro ao processar {ticker}: {str(e)}")
@@ -108,6 +123,9 @@ def normalize_prices(data_dict: Dict[str, pd.DataFrame]) -> pd.DataFrame:
     
     for ticker, data in data_dict.items():
         if not data.empty and 'Close' in data.columns:
-            normalized[ticker] = (data['Close'] / data['Close'].iloc[0]) * 100
+            close_series = pd.to_numeric(data['Close'], errors='coerce')
+            first_value = close_series.iloc[0]
+            if pd.notna(first_value) and first_value != 0:
+                normalized[ticker] = (close_series / first_value) * 100
             
     return normalized
