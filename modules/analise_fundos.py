@@ -6,6 +6,7 @@ import pandas as pd
 from config import Config
 from utils.data_fetcher import fetch_stock_data, get_stock_info
 from utils.formatters import formatar_moeda, formatar_percentual, obter_simbolo_moeda
+from utils.indicators import calculate_volatility, calculate_sharpe_ratio
 
 
 def show():
@@ -64,11 +65,11 @@ def show():
                      delta=formatar_percentual(variacao))
         
         with col3:
-            volatilidade = calcular_volatilidade_anual(dados)
+            volatilidade = calculate_volatility(dados)
             st.metric("Volatilidade Anual", formatar_percentual(volatilidade))
         
         with col4:
-            sharpe = calcular_sharpe_ratio(dados)
+            sharpe = calculate_sharpe_ratio(dados)
             st.metric("Índice Sharpe", f"{sharpe:.2f}")
     
     except (ValueError, TypeError, IndexError) as e:
