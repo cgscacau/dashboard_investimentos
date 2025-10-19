@@ -28,7 +28,7 @@ def fetch_stock_data(ticker: str, period: str = '1y') -> Optional[pd.DataFrame]:
             ticker, 
             period=period, 
             progress=False,
-            auto_adjust=True,  # Ajusta automaticamente para evitar multi-index
+            auto_adjust=True,
             threads=False
         )
         
@@ -103,6 +103,17 @@ def get_stock_info(ticker: str) -> Optional[Dict]:
     try:
         stock = yf.Ticker(ticker)
         info = stock.info
+        
+        # Adicionar dividend yield se não existir
+        if 'dividendYield' not in info or info['dividendYield'] is None:
+            # Tentar calcular manualmente
+            dividends = stock.dividends
+            if not dividends.empty and 'currentPrice' in info:
+                ultimo_ano_dividendos = dividends.last('1Y').sum()
+                preco_atual = info.get('currentPrice', info.get('regularMarketPrice', 0))
+                if preco_atual > 0:
+                    info['dividendYield'] = ultimo_ano_dividendos / preco_atual
+        
         return info
     except Exception as e:
         logger.error(f"Erro ao obter informações de {ticker}: {str(e)}")
