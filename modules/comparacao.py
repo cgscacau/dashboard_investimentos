@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import pandas as pd
 from config import Config
 from utils.data_fetcher import fetch_multiple_stocks, normalize_prices
+from utils.formatters import formatar_moeda, formatar_percentual, obter_simbolo_moeda
 
 
 def show():
@@ -13,7 +14,7 @@ def show():
     
     st.info("""
     **Como usar:**
-    - Digite os tickers separados por vírgula
+    - Digite os códigos separados por vírgula
     - Use .SA para ações brasileiras (ex: PETR4.SA, VALE3.SA)
     - Máximo de 5 ativos por comparação
     """)
@@ -23,7 +24,7 @@ def show():
         st.header("Configurações")
         
         tickers_input = st.text_area(
-            "Digite os tickers (separados por vírgula):",
+            "Digite os códigos (separados por vírgula):",
             value="PETR4.SA, VALE3.SA, ITUB4.SA",
             help="Ex: PETR4.SA, VALE3.SA, ITUB4.SA"
         )
@@ -45,7 +46,7 @@ def show():
     tickers = [t.strip().upper() for t in tickers_input.split(',') if t.strip()]
     
     if len(tickers) == 0:
-        st.warning("⚠️ Por favor, insira pelo menos um ticker.")
+        st.warning("⚠️ Por favor, insira pelo menos um código.")
         return
     
     if len(tickers) > 5:
@@ -57,7 +58,7 @@ def show():
         dados_dict = fetch_multiple_stocks(tickers, periodo)
     
     if not dados_dict:
-        st.error("❌ Não foi possível obter dados para nenhum dos tickers informados.")
+        st.error("❌ Não foi possível obter dados para nenhum dos códigos informados.")
         return
     
     # Verificar quais tickers falharam
@@ -103,17 +104,18 @@ def mostrar_metricas_comparativas(dados_dict):
         if dados.empty:
             continue
         
-        preco_inicial = dados['Close'].iloc[0]
-        preco_final = dados['Close'].iloc[-1]
+        moeda = obter_simbolo_moeda(ticker)
+        preco_inicial = float(dados['Close'].iloc[0])
+        preco_final = float(dados['Close'].iloc[-1])
         variacao = ((preco_final - preco_inicial) / preco_inicial) * 100
         volatilidade = dados['Close'].pct_change().std() * (252 ** 0.5) * 100
         
         metricas.append({
-            'Ticker': ticker,
-            'Preço Inicial': f"R$ {preco_inicial:.2f}",
-            'Preço Atual': f"R$ {preco_final:.2f}",
-            'Variação': f"{variacao:.2f}%",
-            'Volatilidade': f"{volatilidade:.2f}%"
+            'Código': ticker,
+            'Preço Inicial': formatar_moeda(preco_inicial, moeda),
+            'Preço Atual': formatar_moeda(preco_final, moeda),
+            'Variação': formatar_percentual(variacao),
+            'Volatilidade': formatar_percentual(volatilidade)
         })
     
     df_metricas = pd.DataFrame(metricas)
@@ -183,7 +185,7 @@ def criar_grafico_absoluto(dados_dict):
     
     fig.update_layout(
         title='Comparação de Preços Absolutos',
-        yaxis_title='Preço (R$)',
+        yaxis_title='Preço',
         xaxis_title='Data',
         height=600,
         hovermode='x unified',
@@ -207,8 +209,8 @@ def criar_grafico_retornos_comparativo(dados_dict):
     
     for ticker, dados in dados_dict.items():
         if not dados.empty:
-            preco_inicial = dados['Close'].iloc[0]
-            preco_final = dados['Close'].iloc[-1]
+            preco_inicial = float(dados['Close'].iloc[0])
+            preco_final = float(dados['Close'].iloc[-1])
             retorno = ((preco_final - preco_inicial) / preco_inicial) * 100
             retornos_data[ticker] = retorno
     
@@ -222,14 +224,14 @@ def criar_grafico_retornos_comparativo(dados_dict):
         x=tickers,
         y=retornos,
         marker_color=cores,
-        text=[f"{r:.2f}%" for r in retornos],
+        text=[formatar_percentual(r) for r in retornos],
         textposition='outside'
     ))
     
     fig.update_layout(
         title='Retornos no Período',
         yaxis_title='Retorno (%)',
-        xaxis_title='Ticker',
+        xaxis_title='Código',
         height=400,
         showlegend=False
     )
@@ -294,15 +296,16 @@ def mostrar_tabela_comparativa(dados_dict, periodo):
             continue
         
         retornos = dados['Close'].pct_change().dropna()
+        moeda = obter_simbolo_moeda(ticker)
         
-        preco_inicial = dados['Close'].iloc[0]
-        preco_final = dados['Close'].iloc[-1]
+        preco_inicial = float(dados['Close'].iloc[0])
+        preco_final = float(dados['Close'].iloc[-1])
         variacao = ((preco_final - preco_inicial) / preco_inicial) * 100
         
         volatilidade = retornos.std() * (252 ** 0.5) * 100
         retorno_medio = retornos.mean() * 252 * 100
         
-        # Sharpe Ratio
+        # Índice Sharpe
         sharpe = (retorno_medio - 10) / volatilidade if volatilidade != 0 else 0
         
         # Drawdown máximo
@@ -312,14 +315,14 @@ def mostrar_tabela_comparativa(dados_dict, periodo):
         max_drawdown = drawdown.min() * 100
         
         comparacao.append({
-            'Ticker': ticker,
-            'Preço Inicial (R$)': f"{preco_inicial:.2f}",
-            'Preço Final (R$)': f"{preco_final:.2f}",
-            'Variação (%)': f"{variacao:.2f}",
-            'Retorno Anualizado (%)': f"{retorno_medio:.2f}",
-            'Volatilidade Anual (%)': f"{volatilidade:.2f}",
-            'Sharpe Ratio': f"{sharpe:.2f}",
-            'Drawdown Máximo (%)': f"{max_drawdown:.2f}"
+            'Código': ticker,
+            f'Preço Inicial ({moeda})': f"{preco_inicial:.2f}",
+            f'Preço Final ({moeda})': f"{preco_final:.2f}",
+            'Variação (%)': formatar_percentual(variacao),
+            'Retorno Anualizado (%)': formatar_percentual(retorno_medio),
+            'Volatilidade Anual (%)': formatar_percentual(volatilidade),
+            'Índice Sharpe': f"{sharpe:.2f}",
+            'Drawdown Máximo (%)': formatar_percentual(max_drawdown)
         })
     
     df_comparacao = pd.DataFrame(comparacao)
