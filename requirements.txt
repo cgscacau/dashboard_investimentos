@@ -1,9 +1,8 @@
 streamlit
 pandas>=2.0.0
-numpy>=1.26.0,<2.0
+numpy>=1.26.0
 plotly
 yfinance
-pandas-ta
 beautifulsoup4
 lxml
 requests
