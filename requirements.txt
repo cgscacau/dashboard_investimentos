@@ -1,20 +1,10 @@
-# Core
-streamlit==1.32.0
-pandas==2.2.3
-numpy==1.26.4
-
-# Visualização
-plotly==5.24.1
-matplotlib==3.10.3
-
-# Análise Financeira
-yfinance==0.2.50
-pandas-ta==0.3.14b
-
-# Web Scraping (se necessário)
-beautifulsoup4==4.13.4
-lxml==5.4.0
-requests==2.32.3
-
-# Opcional - apenas se usar investpy
-# investpy==1.0.8  # ⚠️ Descontinuado
+streamlit>=1.32.0
+pandas>=2.2.0
+numpy>=1.26.0,<2.0
+plotly>=5.24.0
+matplotlib>=3.9.0
+yfinance>=0.2.40
+pandas-ta>=0.3.14b
+beautifulsoup4>=4.12.0
+lxml>=5.0.0
+requests>=2.31.0
