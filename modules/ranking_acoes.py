@@ -150,7 +150,8 @@ def show():
     
     for idx, row in top_10.iterrows():
         with st.container():
-            col1, col2, col3, col4, col5 = st.columns([0.5, 2, 1.5, 1.5, 1])
+            # Criar 5 colunas (não 6)
+            col1, col2, col3, col4, col5 = st.columns([0.5, 2.5, 1.5, 1.5, 1])
             
             with col1:
                 st.markdown(f"<h2 style='color: {row['cor']};'>#{row['ranking']}</h2>", unsafe_allow_html=True)
@@ -160,8 +161,12 @@ def show():
                 st.caption(row['nome'][:40] + "..." if len(row['nome']) > 40 else row['nome'])
             
             with col3:
-                st.markdown(f"<div style='background: {row['cor']}; color: white; padding: 0.5rem; border-radius: 10px; text-align: center;'>"
-                           f"<strong>Score: {row['score_total']:.1f}</strong></div>", unsafe_allow_html=True)
+                st.markdown(f"""
+                    <div style='background: {row['cor']}; color: white; padding: 0.5rem; 
+                                border-radius: 10px; text-align: center;'>
+                        <strong>Score: {row['score_total']:.1f}</strong>
+                    </div>
+                """, unsafe_allow_html=True)
                 st.caption(row['classificacao'])
             
             with col4:
@@ -169,13 +174,14 @@ def show():
                          delta=formatar_percentual(row['retorno']))
             
             with col5:
-                with col6:
-                    if st.button("📊 Detalhes", key=f"btn_acoes_{row['ticker']}", use_container_width=True):
-                        st.session_state.ativo_selecionado = row['ticker']
-                        st.session_state.pagina_atual = "🔍 Análise Detalhada"
-                        st.rerun()
+                # Botão de detalhes com key único
+                if st.button("📊 Ver", key=f"btn_acoes_{row['ticker']}_{idx}", use_container_width=True):
+                    st.session_state.ativo_selecionado = row['ticker']
+                    st.session_state.pagina_atual = "🔍 Análise Detalhada"
+                    st.rerun()
             
             st.markdown("---")
+
     
     # === SEÇÃO 3: TABELA COMPLETA ===
     with st.expander("📋 Ver Tabela Completa", expanded=False):
