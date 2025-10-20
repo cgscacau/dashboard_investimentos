@@ -25,26 +25,26 @@ def show():
         </div>
     """, unsafe_allow_html=True)
     
-    # Sidebar - Seleção de ativo
-    with st.sidebar:
-        st.markdown("### 🎯 Selecionar Ativo")
-        
+    # Controles no conteúdo principal (não no sidebar)
+    col1, col2, col3 = st.columns([3, 2, 1])
+    
+    with col1:
         # Usar valor do session_state se existir
         valor_padrao = st.session_state.get('ativo_selecionado', 'PETR4.SA')
         
         ticker = st.text_input(
-            "Digite o código:",
+            "🎯 Digite o código do ativo:",
             value=valor_padrao,
-            help="Ex: PETR4.SA, AAPL, BOVA11.SA"
+            help="Ex: PETR4.SA, AAPL, BOVA11.SA",
+            key="input_ticker_detalhado"
         ).upper()
-        
-        # Atualizar session_state
-        st.session_state.ativo_selecionado = ticker
-        
+    
+    with col2:
         periodo_label = st.selectbox(
-            "Período:",
+            "📅 Período:",
             ['1 mês', '3 meses', '6 meses', '1 ano', '2 anos'],
-            index=3
+            index=3,
+            key="select_periodo_detalhado"
         )
         
         periodos_map = {
@@ -55,31 +55,49 @@ def show():
             '2 anos': '2y'
         }
         periodo = periodos_map[periodo_label]
-        
+    
+    with col3:
+        st.markdown("<br>", unsafe_allow_html=True)
         analisar = st.button("🔍 Analisar", use_container_width=True, type="primary")
     
-    # Analisar automaticamente se vier de um ranking
-    if ticker and (analisar or valor_padrao != 'PETR4.SA'):
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Analisar automaticamente se vier de um ranking ou se clicar no botão
+    if ticker and (analisar or (valor_padrao != 'PETR4.SA' and ticker == valor_padrao)):
         analisar_ativo(ticker, periodo)
-    elif not analisar:
-        st.info("👆 Digite um código de ativo e clique em 'Analisar' para começar.")
+    elif not ticker:
+        st.info("👆 Digite um código de ativo acima para começar a análise.")
+
 
 def analisar_ativo(ticker, periodo):
     """Realiza análise completa do ativo."""
     
     # Buscar dados
-    with st.spinner(f'Carregando dados de {ticker}...'):
+    with st.spinner(f'🔄 Carregando dados de {ticker}...'):
         dados = fetch_stock_data(ticker, periodo)
         info = get_stock_info(ticker)
     
     if dados is None or dados.empty:
-        st.error(f"❌ Não foi possível obter dados para {ticker}")
+        st.error(f"""
+            ### ❌ Não foi possível obter dados para {ticker}
+            
+            **Possíveis causas:**
+            - Código incorreto
+            - Ativo não disponível no Yahoo Finance
+            - Problemas de conexão
+            
+            **💡 Dicas:**
+            - Para ações brasileiras, use .SA (ex: PETR4.SA)
+            - Para ações americanas, use o código direto (ex: AAPL)
+            - Verifique se o código está correto
+        """)
         return
     
     moeda = obter_simbolo_moeda(ticker)
     
     # Calcular score
-    score_data = calcular_score_ativo(dados, info)
+    with st.spinner('📊 Calculando indicadores...'):
+        score_data = calcular_score_ativo(dados, info)
     
     if score_data is None:
         st.error("❌ Erro ao calcular score do ativo")
@@ -155,9 +173,13 @@ def analisar_ativo(ticker, periodo):
     signals = get_signal_interpretation(indicators)
     
     if signals:
-        cols = st.columns(len(signals))
+        num_signals = len(signals)
+        cols = st.columns(min(num_signals, 3))
+        
         for i, (indicator, signal) in enumerate(signals.items()):
-            with cols[i]:
+            col_index = i % 3
+            
+            with cols[col_index]:
                 if "🟢" in signal:
                     cor = "#10b981"
                     icone = "✅"
@@ -172,7 +194,8 @@ def analisar_ativo(ticker, periodo):
                 
                 st.markdown(f"""
                     <div style='background: white; border-left: 5px solid {cor}; 
-                                padding: 1rem; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);'>
+                                padding: 1rem; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                                margin-bottom: 1rem;'>
                         <h4 style='color: {cor}; margin: 0;'>{icone} {indicator}</h4>
                         <p style='color: #64748b; margin: 0.5rem 0 0 0;'>{texto_sinal}</p>
                     </div>
@@ -310,4 +333,3 @@ def criar_grafico_radar(score_data):
     )
     
     st.plotly_chart(fig, use_container_width=True)
-
