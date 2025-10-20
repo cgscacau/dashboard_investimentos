@@ -14,60 +14,23 @@ from utils.formatters import formatar_moeda, formatar_percentual, traduzir_setor
 def show():
     """Exibe a página de análise de ações."""
     
-    # CSS específico da página
+    # Título principal premium
     st.markdown("""
-        <style>
-        /* Cards de métricas personalizados */
-        .metric-card {
-            padding: 20px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-        }
-        
-        .metric-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-        }
-        
-        .metric-label {
-            color: white;
-            font-size: 0.9rem;
-            margin: 0;
-            font-weight: 600;
-        }
-        
-        .metric-value {
-            color: white;
-            font-size: 2rem;
-            margin: 10px 0;
-            font-weight: 700;
-        }
-        
-        /* Badge de sinal */
-        .signal-badge {
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin: 10px 0;
-        }
-        
-        .signal-title {
-            color: white;
-            margin: 0;
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-        
-        .signal-text {
-            color: white;
-            margin: 10px 0 0 0;
-            font-size: 0.9rem;
-        }
-        </style>
+        <div style='text-align: center; padding: 2rem 0; background: white; border-radius: 20px; 
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-bottom: 2rem;'>
+            <div style='font-size: 4rem; margin-bottom: 1rem;'>📈</div>
+            <h1 style='margin: 0; font-size: 2.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                       -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>
+                Análise Técnica de Ações
+            </h1>
+            <p style='color: #64748b; font-size: 1.1rem; margin-top: 0.5rem;'>
+                Análise profissional com indicadores técnicos avançados
+            </p>
+        </div>
     """, unsafe_allow_html=True)
+    
+    # Resto do código continua igual...
+
     
     # Título com ícone
     st.markdown("""
