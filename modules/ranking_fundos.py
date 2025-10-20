@@ -319,10 +319,11 @@ def criar_card_fundo(row):
             st.caption(f"Vol: {row['volatilidade']:.1f}%")
         
         with col6:
-            if st.button("📊", key=f"btn_fund_{row['ticker']}", use_container_width=True):
-                st.session_state.ativo_selecionado = row['ticker']
-                st.session_state.pagina_atual = "🔍 Análise Detalhada"
-                st.rerun()
+            with col6:
+                if st.button("📊", key=f"btn_fundos_{row['ticker']}", use_container_width=True):
+                    st.session_state.ativo_selecionado = row['ticker']
+                    st.session_state.pagina_atual = "🔍 Análise Detalhada"
+                    st.rerun()
         
         st.markdown("---")
 
