@@ -170,8 +170,9 @@ def show():
             
             with col5:
                 if st.button("📊 Detalhes", key=f"btn_{row['ticker']}", use_container_width=True):
-                    st.session_state.acao_selecionada = row['ticker']
-                    st.switch_page("pages/analise_detalhada.py")
+                    st.session_state.ativo_selecionado = row['ticker']
+                    st.session_state.pagina_atual = "🔍 Análise Detalhada"
+                    st.rerun()
             
             st.markdown("---")
     
