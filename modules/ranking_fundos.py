@@ -321,7 +321,8 @@ def criar_card_fundo(row):
         with col6:
             if st.button("📊", key=f"btn_fund_{row['ticker']}", use_container_width=True):
                 st.session_state.ativo_selecionado = row['ticker']
-                # Navegar para análise detalhada
+                st.session_state.pagina_atual = "🔍 Análise Detalhada"
+                st.rerun()
         
         st.markdown("---")
 
