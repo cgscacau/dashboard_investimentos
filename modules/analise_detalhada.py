@@ -29,11 +29,17 @@ def show():
     with st.sidebar:
         st.markdown("### 🎯 Selecionar Ativo")
         
+        # Usar valor do session_state se existir
+        valor_padrao = st.session_state.get('ativo_selecionado', 'PETR4.SA')
+        
         ticker = st.text_input(
             "Digite o código:",
-            value=st.session_state.get('ativo_selecionado', 'PETR4.SA'),
+            value=valor_padrao,
             help="Ex: PETR4.SA, AAPL, BOVA11.SA"
         ).upper()
+        
+        # Atualizar session_state
+        st.session_state.ativo_selecionado = ticker
         
         periodo_label = st.selectbox(
             "Período:",
@@ -52,9 +58,11 @@ def show():
         
         analisar = st.button("🔍 Analisar", use_container_width=True, type="primary")
     
-    if analisar or ticker:
+    # Analisar automaticamente se vier de um ranking
+    if ticker and (analisar or valor_padrao != 'PETR4.SA'):
         analisar_ativo(ticker, periodo)
-
+    elif not analisar:
+        st.info("👆 Digite um código de ativo e clique em 'Analisar' para começar.")
 
 def analisar_ativo(ticker, periodo):
     """Realiza análise completa do ativo."""
