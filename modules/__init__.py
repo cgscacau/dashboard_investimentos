@@ -1,15 +1,17 @@
 """
-Módulos de análise do Dashboard de Investimentos.
+Módulos de análise do Dashboard de Investimentos - Sistema de Ranking.
 """
 
-from . import analise_acoes
-from . import analise_fundos
+from . import ranking_acoes
+from . import ranking_fundos
+from . import analise_detalhada
 from . import comparacao
 
 __all__ = [
-    'analise_acoes',
-    'analise_fundos',
+    'ranking_acoes',
+    'ranking_fundos',
+    'analise_detalhada',
     'comparacao'
 ]
 
-__version__ = '2.0.0'
+__version__ = '3.0.0'
