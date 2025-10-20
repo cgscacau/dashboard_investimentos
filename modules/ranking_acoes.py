@@ -169,10 +169,11 @@ def show():
                          delta=formatar_percentual(row['retorno']))
             
             with col5:
-                if st.button("📊 Detalhes", key=f"btn_{row['ticker']}", use_container_width=True):
-                    st.session_state.ativo_selecionado = row['ticker']
-                    st.session_state.pagina_atual = "🔍 Análise Detalhada"
-                    st.rerun()
+                with col6:
+                    if st.button("📊 Detalhes", key=f"btn_acoes_{row['ticker']}", use_container_width=True):
+                        st.session_state.ativo_selecionado = row['ticker']
+                        st.session_state.pagina_atual = "🔍 Análise Detalhada"
+                        st.rerun()
             
             st.markdown("---")
     
