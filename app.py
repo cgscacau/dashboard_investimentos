@@ -14,7 +14,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# CSS customizado premium
+# CSS customizado premium com melhor contraste
 st.markdown("""
     <style>
     /* Importar fonte moderna */
@@ -27,73 +27,86 @@ st.markdown("""
     
     .main {
         padding: 0rem 2rem;
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        background: #f8fafc;
     }
     
     /* Sidebar moderna */
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
-        box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+        background: linear-gradient(180deg, #1a1f36 0%, #0f172a 100%);
+        box-shadow: 4px 0 20px rgba(0,0,0,0.3);
     }
     
     [data-testid="stSidebar"] * {
-        color: white !important;
+        color: #e2e8f0 !important;
     }
     
     /* Header da sidebar */
     .sidebar-header {
         text-align: center;
         padding: 2rem 1rem;
-        background: rgba(255,255,255,0.1);
+        background: rgba(255,255,255,0.05);
         border-radius: 15px;
         margin: 1rem;
         backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.1);
     }
     
     .sidebar-title {
         font-size: 1.8rem;
         font-weight: 700;
         margin: 0.5rem 0;
-        background: linear-gradient(90deg, #fff, #a8dadc);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: #ffffff !important;
+        text-shadow: 0 2px 10px rgba(102, 126, 234, 0.5);
     }
     
     /* Radio buttons modernos */
     .stRadio > div {
-        background: rgba(255,255,255,0.1);
+        background: rgba(255,255,255,0.05);
         padding: 1.5rem;
         border-radius: 15px;
         backdrop-filter: blur(10px);
-        border: 1px solid rgba(255,255,255,0.2);
+        border: 1px solid rgba(255,255,255,0.1);
     }
     
     .stRadio label {
         font-weight: 600 !important;
         font-size: 1.1rem !important;
-        padding: 0.8rem !important;
+        padding: 0.8rem 1rem !important;
         margin: 0.5rem 0 !important;
         border-radius: 10px !important;
         transition: all 0.3s ease !important;
         cursor: pointer !important;
+        color: #e2e8f0 !important;
     }
     
     .stRadio label:hover {
-        background: rgba(255,255,255,0.2) !important;
+        background: rgba(102, 126, 234, 0.3) !important;
         transform: translateX(5px);
     }
     
     /* Expanders na sidebar */
-    .streamlit-expanderHeader {
-        background: rgba(255,255,255,0.1) !important;
+    [data-testid="stSidebar"] .streamlit-expanderHeader {
+        background: rgba(255,255,255,0.05) !important;
         border-radius: 10px !important;
         padding: 1rem !important;
         font-weight: 600 !important;
-        border: 1px solid rgba(255,255,255,0.2) !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+        color: #e2e8f0 !important;
     }
     
-    .streamlit-expanderHeader:hover {
-        background: rgba(255,255,255,0.2) !important;
+    [data-testid="stSidebar"] .streamlit-expanderHeader:hover {
+        background: rgba(102, 126, 234, 0.2) !important;
+    }
+    
+    /* Texto na sidebar mais visível */
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] span,
+    [data-testid="stSidebar"] div {
+        color: #e2e8f0 !important;
+    }
+    
+    [data-testid="stSidebar"] strong {
+        color: #ffffff !important;
     }
     
     /* Cards de métricas premium */
@@ -124,129 +137,92 @@ st.markdown("""
     }
     
     .metric-label {
-        color: #64748b;
-        font-size: 0.9rem;
-        font-weight: 600;
+        color: #475569;
+        font-size: 1rem;
+        font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 1px;
         margin-bottom: 0.5rem;
     }
     
     .metric-value {
-        color: #1e293b;
+        color: #0f172a;
         font-size: 2.5rem;
         font-weight: 700;
         margin: 0.5rem 0;
     }
     
-    .metric-change {
-        font-size: 0.9rem;
-        font-weight: 600;
-        padding: 0.3rem 0.8rem;
-        border-radius: 20px;
-        display: inline-block;
-        margin-top: 0.5rem;
-    }
-    
-    .metric-change.positive {
-        background: rgba(34, 197, 94, 0.1);
-        color: #16a34a;
-    }
-    
-    .metric-change.negative {
-        background: rgba(239, 68, 68, 0.1);
-        color: #dc2626;
-    }
-    
-    /* Títulos elegantes */
+    /* Títulos com melhor contraste */
     h1 {
-        color: #1e293b;
-        font-weight: 700;
-        font-size: 3rem;
-        margin-bottom: 2rem;
-        text-align: center;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        color: #0f172a !important;
+        font-weight: 700 !important;
+        font-size: 2.5rem !important;
+        margin-bottom: 1rem !important;
     }
     
     h2 {
-        color: #334155;
-        font-weight: 600;
-        font-size: 1.8rem;
-        margin: 2rem 0 1rem 0;
-        padding-bottom: 0.5rem;
-        border-bottom: 3px solid #667eea;
-        display: inline-block;
+        color: #1e293b !important;
+        font-weight: 600 !important;
+        font-size: 1.8rem !important;
+        margin: 2rem 0 1rem 0 !important;
     }
     
     h3 {
-        color: #475569;
-        font-weight: 600;
-        font-size: 1.4rem;
-        margin: 1.5rem 0 1rem 0;
+        color: #334155 !important;
+        font-weight: 600 !important;
+        font-size: 1.4rem !important;
+        margin: 1.5rem 0 1rem 0 !important;
     }
     
-    /* Badges de sinal premium */
+    /* Badges de sinal com melhor contraste */
     .signal-badge {
         background: white;
         padding: 1.5rem;
         border-radius: 15px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         margin: 1rem 0;
         border-left: 5px solid;
         transition: all 0.3s ease;
     }
     
-    .signal-badge:hover {
-        transform: translateX(5px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
-    }
-    
-    .signal-badge.success {
-        border-left-color: #22c55e;
-        background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
-    }
-    
-    .signal-badge.warning {
-        border-left-color: #f59e0b;
-        background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);
-    }
-    
-    .signal-badge.danger {
-        border-left-color: #ef4444;
-        background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
-    }
-    
     .signal-title {
-        color: #1e293b;
+        color: #0f172a;
         font-size: 1.1rem;
         font-weight: 700;
         margin-bottom: 0.5rem;
     }
     
     .signal-text {
-        color: #64748b;
-        font-size: 0.95rem;
+        color: #475569;
+        font-size: 1rem;
         line-height: 1.6;
+        font-weight: 500;
     }
     
     /* Input fields modernos */
     .stTextInput > div > div > input,
     .stSelectbox > div > div > select {
         border-radius: 12px !important;
-        border: 2px solid #e2e8f0 !important;
+        border: 2px solid #cbd5e1 !important;
         padding: 0.8rem 1rem !important;
         font-size: 1rem !important;
         transition: all 0.3s ease !important;
         background: white !important;
+        color: #0f172a !important;
+        font-weight: 500 !important;
     }
     
     .stTextInput > div > div > input:focus,
     .stSelectbox > div > div > select:focus {
         border-color: #667eea !important;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2) !important;
+    }
+    
+    /* Labels mais visíveis */
+    label {
+        color: #1e293b !important;
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
     }
     
     /* Botões premium */
@@ -282,6 +258,7 @@ st.markdown("""
         border-radius: 10px;
         font-weight: 600;
         transition: all 0.3s ease;
+        color: #475569;
     }
     
     .stTabs [aria-selected="true"] {
@@ -289,76 +266,26 @@ st.markdown("""
         color: white !important;
     }
     
-    /* Alerts premium */
-    .stAlert {
-        border-radius: 15px !important;
-        border: none !important;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08) !important;
-        padding: 1.5rem !important;
+    /* Checkbox mais visível */
+    .stCheckbox {
+        padding: 0.5rem;
+        transition: all 0.3s ease;
     }
     
-    /* Expanders do conteúdo */
-    .main .streamlit-expanderHeader {
-        background: white !important;
-        color: #1e293b !important;
-        border-radius: 12px !important;
-        padding: 1.2rem !important;
+    .stCheckbox label {
+        color: #e2e8f0 !important;
         font-weight: 600 !important;
-        border: 2px solid #e2e8f0 !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
     }
     
-    .main .streamlit-expanderHeader:hover {
-        border-color: #667eea !important;
-        background: #f8fafc !important;
-    }
-    
-    /* Tabelas modernas */
-    .dataframe {
-        border-radius: 15px !important;
-        overflow: hidden !important;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08) !important;
-    }
-    
-    .dataframe thead tr th {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        color: white !important;
-        font-weight: 600 !important;
-        padding: 1rem !important;
-    }
-    
-    .dataframe tbody tr:hover {
-        background: #f8fafc !important;
-    }
-    
-    /* Gráficos */
-    .js-plotly-plot {
-        border-radius: 15px !important;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08) !important;
-        background: white !important;
-        padding: 1rem !important;
-    }
-    
-    /* Animações */
-    @keyframes slideIn {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    .element-container {
-        animation: slideIn 0.5s ease-out;
+    /* Texto geral mais legível */
+    p, span, div {
+        color: #334155;
     }
     
     /* Scrollbar customizada */
     ::-webkit-scrollbar {
-        width: 10px;
-        height: 10px;
+        width: 12px;
+        height: 12px;
     }
     
     ::-webkit-scrollbar-track {
@@ -370,36 +297,9 @@ st.markdown("""
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-radius: 10px;
     }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-    }
-    
-    /* Checkbox personalizado */
-    .stCheckbox {
-        padding: 0.5rem;
-        transition: all 0.3s ease;
-    }
-    
-    .stCheckbox:hover {
-        background: rgba(102, 126, 234, 0.05);
-        border-radius: 8px;
-    }
-    
-    /* Spinner customizado */
-    .stSpinner > div {
-        border-top-color: #667eea !important;
-    }
-    
-    /* Divider elegante */
-    hr {
-        margin: 2rem 0;
-        border: none;
-        height: 2px;
-        background: linear-gradient(90deg, transparent, #667eea, transparent);
-    }
     </style>
     """, unsafe_allow_html=True)
+
 
 
 def main():
