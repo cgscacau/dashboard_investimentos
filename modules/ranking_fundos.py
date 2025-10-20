@@ -292,6 +292,7 @@ def criar_card_podio(row, posicao, emoji, cor):
 def criar_card_fundo(row):
     """Cria card de fundo na lista."""
     with st.container():
+        # 6 colunas bem definidas
         col1, col2, col3, col4, col5, col6 = st.columns([0.5, 2, 1, 1, 1, 0.8])
         
         with col1:
@@ -319,13 +320,17 @@ def criar_card_fundo(row):
             st.caption(f"Vol: {row['volatilidade']:.1f}%")
         
         with col6:
-            with col6:
-                if st.button("📊", key=f"btn_fundos_{row['ticker']}", use_container_width=True):
-                    st.session_state.ativo_selecionado = row['ticker']
-                    st.session_state.pagina_atual = "🔍 Análise Detalhada"
-                    st.rerun()
+            # Key único para cada fundo
+            if st.button("📊", 
+                       key=f"btn_ver_fundos_{row['ticker']}_{row['ranking']}", 
+                       use_container_width=True,
+                       help=f"Ver análise de {row['ticker']}"):
+                st.session_state.ativo_selecionado = row['ticker']
+                st.session_state.pagina_atual = "🔍 Análise Detalhada"
+                st.rerun()
         
         st.markdown("---")
+
 
 
 def criar_grafico_retornos(df):
