@@ -1,5 +1,5 @@
 """
-Utilitários do Dashboard de Investimentos.
+Utilitários do Dashboard de Investimentos - Sistema de Ranking.
 """
 
 from .data_fetcher import (
@@ -30,6 +30,12 @@ from .formatters import (
     obter_simbolo_moeda
 )
 
+from .scoring import (
+    calcular_score_ativo,
+    normalizar_score,
+    rankear_ativos
+)
+
 __all__ = [
     # Data fetching
     'fetch_stock_data',
@@ -54,7 +60,12 @@ __all__ = [
     'formatar_percentual',
     'traduzir_setor',
     'formatar_numero_grande',
-    'obter_simbolo_moeda'
+    'obter_simbolo_moeda',
+    
+    # Scoring
+    'calcular_score_ativo',
+    'normalizar_score',
+    'rankear_ativos'
 ]
 
-__version__ = '2.0.0'
+__version__ = '3.0.0'
